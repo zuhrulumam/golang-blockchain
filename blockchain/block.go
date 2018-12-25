@@ -1,10 +1,5 @@
 package blockchain
 
-import (
-	"bytes"
-	"crypto/sha256"
-)
-
 // InitChain init block chain with genesis block
 func InitChain() *BlockChain {
 	return &BlockChain{[]*Block{Genesis()}}
@@ -36,14 +31,15 @@ type Block struct {
 	Hash     []byte
 	Data     []byte
 	PrevHash []byte
+	Nonce    int
 }
 
 // CreateHash create hash on particular block
-func (b *Block) CreateHash() {
-	info := bytes.Join([][]byte{b.Data, b.PrevHash}, []byte{})
-	hash := sha256.Sum256(info)
-	b.Hash = hash[:]
-}
+// func (b *Block) CreateHash() {
+// 	info := bytes.Join([][]byte{b.Data, b.PrevHash}, []byte{})
+// 	hash := sha256.Sum256(info)
+// 	b.Hash = hash[:]
+// }
 
 // CreateBlock create block with hash, data, prevhash
 func CreateBlock(data string, prevHash []byte) *Block {
@@ -51,9 +47,15 @@ func CreateBlock(data string, prevHash []byte) *Block {
 		Hash:     []byte{},
 		Data:     []byte(data),
 		PrevHash: prevHash,
+		Nonce:    0,
 	}
 
-	block.CreateHash()
+	pow := NewProof(block)
+
+	nonce, hash := pow.Run()
+
+	block.Hash = hash
+	block.Nonce = nonce
 
 	return block
 
