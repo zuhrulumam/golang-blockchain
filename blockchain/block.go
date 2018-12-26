@@ -1,29 +1,42 @@
 package blockchain
 
-// InitChain init block chain with genesis block
-func InitChain() *BlockChain {
-	return &BlockChain{[]*Block{Genesis()}}
+import (
+	"bytes"
+	"encoding/gob"
+	"log"
+)
+
+// Handle error
+func Handle(err error) {
+	if err != nil {
+		log.Panic(err)
+	}
 }
 
-// Genesis iniial block for the chain
-func Genesis() *Block {
-	return CreateBlock("Genesis", []byte{})
+// Serialize change block into byte for database purpose
+func (block *Block) Serialize() []byte {
+	var buff bytes.Buffer
+
+	encoder := gob.NewEncoder(&buff)
+
+	err := encoder.Encode(block)
+
+	Handle(err)
+
+	return buff.Bytes()
 }
 
-// AddBlock add block to a blockchain
-func (chain *BlockChain) AddBlock(data string) {
-	// get previous block
-	prevBlock := chain.Blocks[len(chain.Blocks)-1]
+// Deserialize turn bytes from database into block
+func Deserialize(data []byte) *Block {
+	var block Block
 
-	// get previous hash from previous chain
-	newBlock := CreateBlock(data, prevBlock.Hash)
+	decoder := gob.NewDecoder(bytes.NewReader(data))
 
-	chain.Blocks = append(chain.Blocks, newBlock)
-}
+	err := decoder.Decode(&block)
 
-// BlockChain model
-type BlockChain struct {
-	Blocks []*Block
+	Handle(err)
+
+	return &block
 }
 
 // Block model
