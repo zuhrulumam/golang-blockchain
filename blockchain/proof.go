@@ -43,7 +43,7 @@ func (pow *ProofOfWork) Run() (int, []byte) {
 
 		fmt.Printf("\r%x", hash)
 		intHash.SetBytes(hash[:])
-		fmt.Printf("intHash \r%T", intHash)
+		// fmt.Printf("intHash \r%T", intHash)
 
 		if intHash.Cmp(pow.Target) == -1 {
 			break
