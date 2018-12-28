@@ -2,9 +2,33 @@ package blockchain
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/gob"
 	"log"
 )
+
+// Block model
+type Block struct {
+	Hash []byte
+	// Data     []byte
+	Transactions []*Transaction
+	PrevHash     []byte
+	Nonce        int
+}
+
+// HashTransactions create a hash from transactions
+func (block *Block) HashTransactions() []byte {
+	var txHashes [][]byte
+	var txHash [32]byte
+
+	for _, tx := range block.Transactions {
+		txHashes = append(txHashes, tx.ID)
+	}
+
+	txHash = sha256.Sum256(bytes.Join(txHashes, []byte{}))
+
+	return txHash[:]
+}
 
 // Handle error
 func Handle(err error) {
@@ -39,14 +63,6 @@ func Deserialize(data []byte) *Block {
 	return &block
 }
 
-// Block model
-type Block struct {
-	Hash     []byte
-	Data     []byte
-	PrevHash []byte
-	Nonce    int
-}
-
 // CreateHash create hash on particular block
 // func (b *Block) CreateHash() {
 // 	info := bytes.Join([][]byte{b.Data, b.PrevHash}, []byte{})
@@ -55,12 +71,12 @@ type Block struct {
 // }
 
 // CreateBlock create block with hash, data, prevhash
-func CreateBlock(data string, prevHash []byte) *Block {
+func CreateBlock(txs []*Transaction, prevHash []byte) *Block {
 	block := &Block{
-		Hash:     []byte{},
-		Data:     []byte(data),
-		PrevHash: prevHash,
-		Nonce:    0,
+		Hash:         []byte{},
+		Transactions: txs,
+		PrevHash:     prevHash,
+		Nonce:        0,
 	}
 
 	pow := NewProof(block)
