@@ -40,11 +40,37 @@ type BlockChain struct {
 	Database *badger.DB
 }
 
+// FindSpendableOutputs get spendable output
+func (chain *BlockChain) FindSpendableOutputs(address string, amount int) (int, map[string][]int) {
+	unspentOutputs := make(map[string][]int)
+	accumulated := 0
+
+	unspentTxs := chain.FindUnspentTransactions(address)
+
+Work:
+	for _, tx := range unspentTxs {
+		txID := hex.EncodeToString(tx.ID)
+
+		for outIdx, out := range tx.Outputs {
+			if out.CanBeUnlocked(address) && accumulated < amount {
+				accumulated += out.Value
+				unspentOutputs[txID] = append(unspentOutputs[txID], outIdx)
+
+				if accumulated > amount {
+					break Work
+				}
+			}
+		}
+	}
+
+	return accumulated, unspentOutputs
+}
+
 // FindUTxO find unspent transaction output
 func (chain *BlockChain) FindUTxO(address string) []TxOutput {
 	var UTxOs []TxOutput
 
-	unspentTransaction := chain.FindUnspentTransaction(address)
+	unspentTransaction := chain.FindUnspentTransactions(address)
 
 	for _, tx := range unspentTransaction {
 		for _, out := range tx.Outputs {
@@ -57,8 +83,8 @@ func (chain *BlockChain) FindUTxO(address string) []TxOutput {
 	return UTxOs
 }
 
-// FindUnspentTransaction find coresponding address unspent transaction
-func (chain *BlockChain) FindUnspentTransaction(address string) []Transaction {
+// FindUnspentTransactions find coresponding address unspent transaction
+func (chain *BlockChain) FindUnspentTransactions(address string) []Transaction {
 	var unspentTxs []Transaction
 
 	spentTxOs := make(map[string][]int)

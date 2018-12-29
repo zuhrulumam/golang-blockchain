@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/gob"
+	"encoding/hex"
 	"fmt"
+	"log"
 )
 
 // TxInput Transaction Input
@@ -25,6 +27,37 @@ type Transaction struct {
 	ID      []byte
 	Inputs  []TxInput
 	Outputs []TxOutput
+}
+
+func NewTransaction(from, to string, amount int, chain *BlockChain) *Transaction {
+	var inputs []TxInput
+	var outputs []TxOutput
+
+	accumulated, validOutputs := chain.FindSpendableOutputs(from, amount)
+	if accumulated < amount {
+		log.Panic("Dont have enough coin")
+	}
+
+	for txIDs, outs := range validOutputs {
+		txID, err := hex.DecodeString(txIDs)
+		Handle(err)
+
+		for _, out := range outs {
+			input := TxInput{txID, out, from}
+			inputs = append(inputs, input)
+		}
+	}
+
+	outputs = append(outputs, TxOutput{amount, to})
+
+	if accumulated > amount {
+		outputs = append(outputs, TxOutput{accumulated - amount, to})
+	}
+
+	tx := Transaction{nil, inputs, outputs}
+	tx.SetID()
+
+	return &tx
 }
 
 // CanBeUnlocked return bool can be unlocked

@@ -11,14 +11,18 @@ import (
 
 // CommandLine model
 type CommandLine struct {
-	blockchain *blockchain.BlockChain
 }
+
+// createBlockChain create a blockchain with corresponding address
+func (cli *CommandLine) createBlockChain(address string) {}
 
 // printUsage print cli usages
 func (cli *CommandLine) printUsage() {
 	fmt.Println("Usage : ")
-	fmt.Println("add -block BLOCK DATA - add block with data ")
-	fmt.Println("print - print blockchain ")
+	fmt.Println("getbalance -address ADDRESS - print blockchain ")
+	fmt.Println("createblockchain -address ADDRESS - print blockchain ")
+	fmt.Println("send -from FROM -to TO -amount AMOUNT - print blockchain ")
+	fmt.Println("printchain - print blockchain ")
 }
 
 func (cli *CommandLine) validateArgs() {
@@ -29,18 +33,19 @@ func (cli *CommandLine) validateArgs() {
 	}
 }
 
-func (cli *CommandLine) addBlock(data string) {
-	cli.blockchain.AddBlock(data)
-	fmt.Println("Block Added")
-}
+// func (cli *CommandLine) addBlock(data string) {
+// 	cli.blockchain.AddBlock(data)
+// 	fmt.Println("Block Added")
+// }
 
 func (cli *CommandLine) printChain() {
-	iter := cli.blockchain.Iterator()
+	chain := blockchain.ContinueBlockChain("")
+	defer chain.Database.Close()
+	iter := chain.Iterator()
 
 	for {
 		block := iter.Next()
 
-		fmt.Printf("Data %s \n", block.Data)
 		fmt.Printf("prevHash %x \n", block.PrevHash)
 		fmt.Printf("Hash %x \n", block.Hash)
 		fmt.Printf("Nonce %d \n", block.Nonce)
